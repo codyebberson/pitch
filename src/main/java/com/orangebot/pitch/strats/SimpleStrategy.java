@@ -30,6 +30,9 @@ public class SimpleStrategy implements PlayerStrategy {
             if (card != null) {
                 return card;
             }
+
+            // Return the lowest card we have
+            return p.getMyLowestCard(true, true, true);
         }
 
         if (p.isHighCard(myHighCard)) {
