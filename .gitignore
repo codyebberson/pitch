@@ -16,3 +16,9 @@ hs_err_pid*
 .project
 .settings/
 
+# Maven
+target/
+
+# Output files
+output-*.csv
+
