@@ -1,29 +1,74 @@
 package com.orangebot.pitch.sim;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.orangebot.pitch.PitchGame;
 import com.orangebot.pitch.strats.SimpleStrategy;
 
 public class Simulation {
+    private final Object lockObject;
+    private final SimulationData data;
+    private long lastWriteTime;
+    private int count;
 
-    public static void main(String[] args) {
-        final long startTime = System.currentTimeMillis();
+    public Simulation() throws InterruptedException {
+        this.lockObject = new Object();
+        this.data = new SimulationData();
+        this.lastWriteTime = System.currentTimeMillis();
 
-        final SimpleStrategy s = new SimpleStrategy();
-        final SimulationData data = new SimulationData();
+        SimulationThread[] threads = new SimulationThread[4];
 
-        final PitchGame pitch = new PitchGame(s, s, s, s);
-
-        for (int i = 0; i < 1000000; i++) {
-            pitch.resetGame();
-            pitch.playRound();
-            data.add(pitch.getBidToken(), pitch.getScore(0));
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new SimulationThread();
         }
 
-        final long endTime = System.currentTimeMillis();
-        final double duration = (endTime - startTime) / 1000.0;
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].start();
+        }
 
-        data.print(10);
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].join();
+        }
+    }
 
-        System.out.println(duration + " seconds");
+    public void add(String token, int points) {
+        synchronized (lockObject) {
+            data.add(token, points);
+            count++;
+
+            if (count % 10000 == 0) {
+                System.out.print(".");
+            }
+
+            if (count % 1000000 == 0) {
+                final long endTime = System.currentTimeMillis();
+                final double duration = (endTime - lastWriteTime) / 1000.0;
+                System.out.println("  " + duration + " seconds");
+                try {
+                    data.write(new File("output-" + System.currentTimeMillis() + ".csv"));
+                } catch (IOException e) {
+                    System.out.println(e);
+                }
+                lastWriteTime = System.currentTimeMillis();
+            }
+        }
+    }
+
+    public class SimulationThread extends Thread {
+        @Override
+        public void run() {
+            final SimpleStrategy s = new SimpleStrategy();
+            final PitchGame pitch = new PitchGame(s, s, s, s);
+            while (true) {
+                pitch.resetGame();
+                pitch.playRound();
+                add(pitch.getBidToken(), pitch.getScore(0));
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        new Simulation();
     }
 }

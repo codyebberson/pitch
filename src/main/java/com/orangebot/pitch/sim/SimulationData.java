@@ -1,5 +1,8 @@
 package com.orangebot.pitch.sim;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +24,18 @@ public class SimulationData {
             rows.put(token, row);
         }
         row.getBuckets()[points]++;
+    }
+
+    public void write(File file) throws IOException {
+        try (PrintWriter out = new PrintWriter(file)) {
+            write(out);
+        }
+    }
+
+    public void write(PrintWriter out) throws IOException {
+        for (SimulationRow row : rows.values()) {
+            out.println(row);
+        }
     }
 
     public void print(int n) {
