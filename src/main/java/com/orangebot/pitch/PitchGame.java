@@ -61,6 +61,14 @@ public class PitchGame {
             }};
     }
 
+    public String getBidToken() {
+        return bidToken;
+    }
+
+    public int getScore(int team) {
+        return score[team];
+    }
+
     /**
      * Plays a single round.
      */
@@ -468,10 +476,21 @@ public class PitchGame {
 
         public boolean isHighCard(Card card) {
             for (Player player : players) {
-                for (Card c : player.getHand()) {
-                    if (getSortValue(c) > getSortValue(card)) {
-                        return false;
-                    }
+                if (!isHighCard(card, player.getHand())) {
+                    return false;
+                }
+            }
+            if (!isHighCard(card, cards.get(CENTER))) {
+                return false;
+            }
+            return true;
+        }
+
+        public boolean isHighCard(Card card, List<Card> cards) {
+            final int threshold = getSortValue(card);
+            for (Card c : cards) {
+                if (getSortValue(c) > threshold) {
+                    return false;
                 }
             }
             return true;
@@ -553,7 +572,7 @@ public class PitchGame {
                 b.append(getShortName(c));
                 b.append(" ");
             }
-            return b.toString();
+            return b.toString().trim();
         }
 
         @Override
@@ -562,7 +581,7 @@ public class PitchGame {
             b.append("[Player id=");
             b.append(id);
             b.append(", hand=[");
-            b.append(getHandString().trim());
+            b.append(getHandString());
             b.append("]]");
             return b.toString();
         }

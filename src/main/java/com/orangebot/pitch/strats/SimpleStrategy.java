@@ -11,17 +11,34 @@ public class SimpleStrategy implements PlayerStrategy {
     @Override
     public Card playCard(Player p) {
 
+        Card myHighCard = p.getMyHighestCard(true, true, true);
+
         if (p.isLead()) {
-            return p.getMyHighestCard(true, true, true);
+            // If I have high card, play high card
+            if (p.isHighCard(myHighCard)) {
+                return myHighCard;
+            }
+
+            // Try to find a non-point card
+            Card card = p.getMyLowestCard(false, true, false);
+            if (card != null) {
+                return card;
+            }
+
+            // Try to avoid the three
+            card = p.getMyLowestCard(true, true, false);
+            if (card != null) {
+                return card;
+            }
         }
 
-        Card myHighCard = p.getMyHighestCard(true, true, true);
         if (p.isHighCard(myHighCard)) {
             return myHighCard;
         }
 
         PlayedCard highCard = p.getHighestPlayedCard();
-        if (highCard.getPlayerId().getTeam() == p.getId().getTeam()) {
+        if (highCard.getPlayerId().getTeam() == p.getId().getTeam() &&
+                p.isHighCard(highCard.getCard())) {
             // High card is from my partner
             // Try to play the three
             if (p.hasCard(Rank.THREE)) {
