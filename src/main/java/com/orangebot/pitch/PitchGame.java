@@ -5,10 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.lang3.Validate;
+
 import com.orangebot.pitch.CardGame.Card;
 import com.orangebot.pitch.CardGame.Rank;
 import com.orangebot.pitch.CardGame.Suit;
-import com.orangebot.pitch.strats.SimpleStrategy;
 
 public class PitchGame {
     public static final String DECK = "deck";
@@ -31,14 +32,18 @@ public class PitchGame {
     private Player lead;
     private String bidToken;
 
-    public PitchGame() {
+    public PitchGame(PlayerStrategy... playerStrategies) {
+        Validate.notNull(playerStrategies);
+        Validate.noNullElements(playerStrategies);
+        Validate.inclusiveBetween(4, 4, playerStrategies.length);
+
         this.cards = new CardGame(DECK, DISCARD, CENTER, P1, P2, P3, P4);
         this.score = new int[2];
         this.players = new Player[] {
-                new Player(P1, P3),
-                new Player(P2, P4),
-                new Player(P3, P1),
-                new Player(P4, P2),
+                new Player(P1, P3, playerStrategies[0]),
+                new Player(P2, P4, playerStrategies[1]),
+                new Player(P3, P1, playerStrategies[2]),
+                new Player(P4, P2, playerStrategies[3]),
         };
         this.played = new ArrayList<PlayedCard>();
 
@@ -158,14 +163,12 @@ public class PitchGame {
         cards.moveAll(CENTER, DISCARD);
         played.clear();
 
-        SimpleStrategy strat = new SimpleStrategy();
-
         for (int i = 0; i < 4; i++) {
             Player p = players[(lead.getId().getIndex() + i) % 4];
             cards.sort(p.getId(), cardComparator);
             if (p.hasTrump()) {
                 System.out.print(p + " plays ");
-                Card card = strat.playCard(p);
+                Card card = p.getStrategy().playCard(p);
                 cards.move(card, p.getId(), CENTER);
                 played.add(new PlayedCard(p.getId(), card));
                 System.out.println(card);
@@ -360,11 +363,16 @@ public class PitchGame {
     public final class Player {
         private final PlayerId id;
         private final PlayerId partnerId;
+        private final PlayerStrategy strategy;
         private boolean out;
 
-        private Player(final PlayerId id, final PlayerId partnerId) {
+        private Player(
+                final PlayerId id,
+                final PlayerId partnerId,
+                final PlayerStrategy strategy) {
             this.id = id;
             this.partnerId = partnerId;
+            this.strategy = strategy;
         }
 
         public PlayerId getId() {
@@ -373,6 +381,10 @@ public class PitchGame {
 
         public PlayerId getPartnerId() {
             return partnerId;
+        }
+
+        public PlayerStrategy getStrategy() {
+            return strategy;
         }
 
         public List<Card> getHand() {
@@ -420,7 +432,45 @@ public class PitchGame {
             return false;
         }
 
-        public Card getHighCard(boolean includePoints, boolean includeNonPoints, boolean includeThree) {
+        public boolean hasCard(Card card) {
+            for (Card c : getHand()) {
+                if (c.equals(card)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean hasCard(Rank rank) {
+            for (Card c : getHand()) {
+                if (c.rank() == rank) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public Card getCard(Rank rank) {
+            for (Card c : getHand()) {
+                if (c.rank() == rank) {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        public boolean isHighCard(Card card) {
+            for (Player player : players) {
+                for (Card c : player.getHand()) {
+                    if (getSortValue(c) > getSortValue(card)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public Card getMyHighestCard(boolean includePoints, boolean includeNonPoints, boolean includeThree) {
             Card bestCard = null;
             int bestValue = 0;
 
@@ -438,7 +488,7 @@ public class PitchGame {
             return bestCard;
         }
 
-        public Card getLowCard(boolean includePoints, boolean includeNonPoints, boolean includeThree) {
+        public Card getMyLowestCard(boolean includePoints, boolean includeNonPoints, boolean includeThree) {
             Card bestCard = null;
             int bestValue = Integer.MAX_VALUE;
 
