@@ -223,7 +223,7 @@ public class PitchGame {
 
         if (!played.isEmpty()) {
             cards.sort(CENTER, cardComparator);
-            played.sort(playedCardComparator);
+            Collections.sort(played, playedCardComparator);
 
             PlayedCard highCard = played.get(0);
             println("High card = " + highCard);
