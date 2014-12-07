@@ -37,11 +37,11 @@ public class Simulation {
             data.add(token, points);
             count++;
 
-            if (count % 10000 == 0) {
+            if (count % 1000000 == 0) {
                 System.out.print(".");
             }
 
-            if (count % 1000000 == 0) {
+            if (count % 100000000 == 0) {
                 final long endTime = System.currentTimeMillis();
                 final double duration = (endTime - lastWriteTime) / 1000.0;
                 System.out.println("  " + duration + " seconds");
