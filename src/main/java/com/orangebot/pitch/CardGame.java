@@ -178,24 +178,45 @@ public class CardGame {
         private final Rank rank;
         private final Suit suit;
 
+        /**
+         * Creates a new card.
+         * @param rank The rank (ace, king, ten, etc).
+         * @param suit The suit (hearts, clubs, etc).
+         */
         private Card(Rank rank, Suit suit) {
             this.rank = rank;
             this.suit = suit;
         }
 
+        /**
+         * Returns the card rank.
+         * @return The card rank.
+         */
         public Rank rank() {
             return this.rank;
         }
 
+        /**
+         * Returns the card suit.
+         * @return The card suit.
+         */
         public Suit suit() {
             return this.suit;
         }
 
+        /**
+         * Returns a semi unique hash code.
+         * @return The hash code.
+         */
         @Override
         public int hashCode() {
             return rank.hashCode() + 31 * suit.hashCode();
         }
 
+        /**
+         * Returns whether the object is the same as this card.
+         * @return True if equal.
+         */
         @Override
         public boolean equals(Object obj) {
             if (obj == null || !(obj instanceof Card)) {
@@ -206,6 +227,10 @@ public class CardGame {
             return this.rank == other.rank && this.suit == other.suit;
         }
 
+        /**
+         * Returns a string name of this card.
+         * @return The card name.
+         */
         @Override
         public String toString() {
             return rank + " of " + suit;
