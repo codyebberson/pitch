@@ -70,6 +70,14 @@ public class PitchGame {
     }
 
     /**
+     * Resets the game state.
+     */
+    public void resetGame() {
+        score[0] = 0;
+        score[1] = 0;
+    }
+
+    /**
      * Plays a single round.
      */
     public void playRound() {
@@ -160,7 +168,8 @@ public class PitchGame {
         final int count = cards.get(p.getId()).size();
         final int need = 6 - count;
         if (need > 0) {
-            cards.move(DECK, p.getId(), need);
+            final int moveCount = Math.min(need, cards.get(DECK).size());
+            cards.move(DECK, p.getId(), moveCount);
             discardPlayer(p);
         }
     }
