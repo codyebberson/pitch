@@ -34,6 +34,7 @@ public class SimulationData {
 
     public void write(PrintWriter out) throws IOException {
         for (SimulationRow row : rows.values()) {
+            row.calculateStats();
             out.println(row);
         }
     }
