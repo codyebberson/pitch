@@ -31,6 +31,7 @@ public class PitchGame {
     private Player bidder;
     private Player lead;
     private String bidToken;
+    private boolean loggingEnabled;
 
     public PitchGame(PlayerStrategy... playerStrategies) {
         Validate.notNull(playerStrategies);
@@ -70,12 +71,12 @@ public class PitchGame {
         redealRound();
 
         for (int i = 0; i < 6; i++) {
-            System.out.println("Hand " + (i + 1));
+            println("Hand " + (i + 1));
             playHand();
-            System.out.println();
+            println();
         }
 
-        System.out.println("Score: " + score[0] + ", " + score[1]);
+        println("Score: " + score[0] + ", " + score[1]);
     }
 
     /**
@@ -111,7 +112,7 @@ public class PitchGame {
         // Remainder goes to the bidder
         cards.sort(bidder.getId(), cardComparator);
         bidToken = bidder.getHandString();
-        System.out.println("Bid hand: " + bidToken);
+        println("Bid hand: " + bidToken);
     }
 
     /**
@@ -139,7 +140,7 @@ public class PitchGame {
         cards.moveAll(DECK, bidder.getId());
         discardPlayer(bidder);
         cards.sort(bidder.getId(), cardComparator);
-        System.out.println("Play hand: " + bidder.getHandString());
+        println("Play hand: " + bidder.getHandString());
     }
 
     /**
@@ -167,14 +168,14 @@ public class PitchGame {
             Player p = players[(lead.getId().getIndex() + i) % 4];
             cards.sort(p.getId(), cardComparator);
             if (p.hasTrump()) {
-                System.out.print(p + " plays ");
+                print(p + " plays ");
                 Card card = p.getStrategy().playCard(p);
                 cards.move(card, p.getId(), CENTER);
                 played.add(new PlayedCard(p.getId(), card));
-                System.out.println(card);
+                println(card);
             } else {
                 p.setOut(true);
-                System.out.println(p + " is out");
+                println(p + " is out");
             }
         }
 
@@ -183,7 +184,7 @@ public class PitchGame {
             played.sort(playedCardComparator);
 
             PlayedCard highCard = played.get(0);
-            System.out.println("High card = " + highCard);
+            println("High card = " + highCard);
 
             int highCardTeam = highCard.getPlayerId().getTeam();
             int[] scoreDelta = new int[2];
@@ -192,10 +193,10 @@ public class PitchGame {
                 int team = c.getCard().rank() == Rank.DEUCE ? cardTeam : highCardTeam;
                 scoreDelta[team] += getPointValue(c.getCard());
             }
-            System.out.println("Score delta: " + scoreDelta[0] + ", " + scoreDelta[1]);
+            println("Score delta: " + scoreDelta[0] + ", " + scoreDelta[1]);
             score[0] += scoreDelta[0];
             score[1] += scoreDelta[1];
-            System.out.println("Score: " + score[0] + ", " + score[1]);
+            println("Score: " + score[0] + ", " + score[1]);
 
             lead = players[highCard.getPlayerId().getIndex()];
         }
@@ -297,20 +298,26 @@ public class PitchGame {
         }
     }
 
+    public void setLoggingEnabled(boolean loggingEnabled) {
+        this.loggingEnabled = loggingEnabled;
+    }
 
-    /**
-     * Prints a debug display to the console.
-     */
-    public void print(String title) {
-        System.out.println("================ START " + title + " =====================");
-        for (Object key : LISTS) {
-            System.out.println(key + ":");
-            List<Card> list = cards.get(key);
-            for (Card c : list) {
-                System.out.println ("  " + c + " (" + getSortValue(c) + "," + getPointValue(c) + ")");
-            }
+    private void print(Object msg) {
+        if (loggingEnabled) {
+            System.out.print(msg);
         }
-        System.out.println("================= END " + title + " ======================");
+    }
+
+    private void println(Object msg) {
+        if (loggingEnabled) {
+            System.out.println(msg);
+        }
+    }
+
+    private void println() {
+        if (loggingEnabled) {
+            System.out.println();
+        }
     }
 
     /**
