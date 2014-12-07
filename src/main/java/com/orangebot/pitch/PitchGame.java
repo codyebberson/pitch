@@ -77,6 +77,7 @@ public class PitchGame {
         bid();
         discard();
         redealRound();
+        bury();
 
         for (int i = 0; i < 6; i++) {
             println("Hand " + (i + 1));
@@ -161,6 +162,30 @@ public class PitchGame {
         if (need > 0) {
             cards.move(DECK, p.getId(), need);
             discardPlayer(p);
+        }
+    }
+
+    /**
+     * Buries cards for all players with more than six cards.
+     */
+    public void bury() {
+        for (Player p : players) {
+            buryPlayer(p);
+        }
+    }
+
+    /**
+     * Buries cards if the player has more than six cards.
+     * @param p The player.
+     */
+    public void buryPlayer(Player p) {
+        while (p.getHand().size() > 6) {
+            Card c = p.getMyLowestCard(false, true, false);
+            if (c == null) {
+                c = p.getMyLowestCard(true, true, false);
+            }
+            println(p + " buries " + c);
+            cards.move(c, p.getId(), DISCARD);
         }
     }
 
