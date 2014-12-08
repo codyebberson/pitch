@@ -21,4 +21,5 @@ target/
 
 # Output files
 output-*.csv
+display-*.html
 

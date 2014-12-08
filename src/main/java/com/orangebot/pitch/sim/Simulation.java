@@ -41,7 +41,7 @@ public class Simulation {
                 System.out.print(".");
             }
 
-            if (count % 100000000 == 0) {
+            if (count % 100_000_000 == 0) {
                 final long endTime = System.currentTimeMillis();
                 final double duration = (endTime - lastWriteTime) / 1000.0;
                 System.out.println("  " + duration + " seconds");
