@@ -23,3 +23,7 @@ target/
 output-*.csv
 display-*.html
 
+# IntelliJ
+*.iml
+.idea/
+
