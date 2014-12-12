@@ -7,6 +7,6 @@ public class App {
         final SimpleStrategy s = new SimpleStrategy();
         final PitchGame pitch = new PitchGame(s, s, s, s);
         pitch.setLoggingEnabled(true);
-        pitch.playRound();
+        pitch.playGame();
     }
 }

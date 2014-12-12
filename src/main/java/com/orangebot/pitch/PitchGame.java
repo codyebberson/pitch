@@ -20,13 +20,17 @@ public class PitchGame {
     public static final PlayerId P3 = new PlayerId(2);
     public static final PlayerId P4 = new PlayerId(3);
     public static final Object[] LISTS = { DECK, DISCARD, CENTER, P1, P2, P3, P4 };
+    public static final int WIN_SCORE = 52;
 
     private final CardGame cards;
     private final Player[] players;
     private final List<PlayedCard> played;
     private final Comparator<Card> cardComparator;
     private final Comparator<PlayedCard> playedCardComparator;
-    private final int[] score;
+    private final int[] gameScore;
+    private final int[] roundScore;
+    private int nextBidIndex;
+    private int highBid;
     private Suit trump;
     private Player bidder;
     private Player lead;
@@ -39,7 +43,8 @@ public class PitchGame {
         Validate.inclusiveBetween(4, 4, playerStrategies.length);
 
         this.cards = new CardGame(DECK, DISCARD, CENTER, P1, P2, P3, P4);
-        this.score = new int[2];
+        this.gameScore = new int[2];
+        this.roundScore = new int[2];
         this.players = new Player[] {
                 new Player(P1, P3, playerStrategies[0]),
                 new Player(P2, P4, playerStrategies[1]),
@@ -59,6 +64,8 @@ public class PitchGame {
             public int compare(PlayedCard c1, PlayedCard c2) {
                 return -Integer.compare(getSortValue(c1.getCard()), getSortValue(c2.getCard()));
             }};
+
+        this.trump = Suit.HEARTS;
     }
 
     public String getBidToken() {
@@ -66,21 +73,43 @@ public class PitchGame {
     }
 
     public int getScore(int team) {
-        return score[team];
+        return gameScore[team];
+    }
+
+    public int getHighBid() {
+        return highBid;
     }
 
     /**
      * Resets the game state.
      */
     public void resetGame() {
-        score[0] = 0;
-        score[1] = 0;
+        for (int i = 0; i < gameScore.length; i++) {
+            gameScore[i] = 0;
+        }
+        for (int i = 0; i < roundScore.length; i++) {
+            roundScore[i] = 0;
+        }
+        nextBidIndex = 0;
+        highBid = 0;
+        cards.moveAll(DECK);
+        cards.shuffle(DECK);
+    }
+
+    public void playGame() {
+        int round = 0;
+        while (gameScore[0] < WIN_SCORE && gameScore[1] < WIN_SCORE) {
+            println();
+            println("Round " + (++round));
+            playRound();
+        }
     }
 
     /**
      * Plays a single round.
      */
     public void playRound() {
+        setupRound();
         dealRound();
         bid();
         discard();
@@ -93,7 +122,39 @@ public class PitchGame {
             println();
         }
 
-        println("Score: " + score[0] + ", " + score[1]);
+        finishRound();
+    }
+
+    /**
+     * Sets up the round.
+     */
+    public void setupRound() {
+        for (int i = 0; i < roundScore.length; i++) {
+            roundScore[i] = 0;
+        }
+    }
+
+    /**
+     * Finishes the round by tallying the scores.
+     */
+    public void finishRound() {
+        println("Round Score: " + roundScore[0] + ", " + roundScore[1]);
+
+        int biddingTeam = bidder.getId().getTeam();
+        int otherTeam = (biddingTeam + 1) % 2;
+
+        if (roundScore[biddingTeam] >= highBid) {
+            println("Made the bid!");
+            gameScore[0] += roundScore[0];
+            gameScore[1] += roundScore[1];
+        } else {
+            println("Went set!");
+            gameScore[biddingTeam] -= highBid;
+            gameScore[otherTeam] += roundScore[otherTeam];
+        }
+
+        println("Game Score: " + gameScore[0] + ", " + gameScore[1]);
+        println();
     }
 
     /**
@@ -113,9 +174,35 @@ public class PitchGame {
      * Auctions the bid.
      */
     public void bid() {
-        trump = Suit.HEARTS;
-        bidder = players[0];
+        highBid = 3;
+
+        for (int i = 0; i < 4; i++) {
+            int playerIndex = (nextBidIndex + i) % 4;
+            Player player = players[playerIndex];
+            int playerBid = player.getStrategy().getBid(player);
+            if (playerBid > highBid) {
+                println(player + " bids " + playerBid);
+                highBid = playerBid;
+                bidder = player;
+            } else {
+                println(player + " passes");
+            }
+        }
+
+        if (highBid < 4) {
+            // If no bid greater than or equal to 4,
+            // then the last person is stuck with the bid.
+            bidder = players[(nextBidIndex + 3) % 4];
+            highBid = 4;
+        }
+
+        trump = bidder.getStrategy().getSuit(bidder);
         lead = bidder;
+        nextBidIndex++;
+
+        println("High bid: " + highBid);
+        println("Bidder: " + bidder);
+        println("Suit: " + trump);
     }
 
     /**
@@ -126,7 +213,7 @@ public class PitchGame {
             discardPlayer(p);
         }
 
-        // Remainder goes to the bidder
+        // Track what the bidding hand was
         cards.sort(bidder.getId(), cardComparator);
         bidToken = bidder.getHandString();
         println("Bid hand: " + bidToken);
@@ -235,10 +322,10 @@ public class PitchGame {
                 int team = c.getCard().rank() == Rank.DEUCE ? cardTeam : highCardTeam;
                 scoreDelta[team] += getPointValue(c.getCard());
             }
-            println("Score delta: " + scoreDelta[0] + ", " + scoreDelta[1]);
-            score[0] += scoreDelta[0];
-            score[1] += scoreDelta[1];
-            println("Score: " + score[0] + ", " + score[1]);
+            println("Round score delta: " + scoreDelta[0] + ", " + scoreDelta[1]);
+            roundScore[0] += scoreDelta[0];
+            roundScore[1] += scoreDelta[1];
+            println("Round score: " + roundScore[0] + ", " + roundScore[1]);
 
             lead = players[highCard.getPlayerId().getIndex()];
         }
@@ -645,6 +732,8 @@ public class PitchGame {
     }
 
     public static interface PlayerStrategy {
+        public int getBid(Player p);
+        public Suit getSuit(Player p);
         public Card playCard(Player p);
     }
 }

@@ -1,12 +1,24 @@
 package com.orangebot.pitch.strats;
 
+import com.orangebot.pitch.CardGame;
 import com.orangebot.pitch.CardGame.Card;
 import com.orangebot.pitch.CardGame.Rank;
+import com.orangebot.pitch.CardGame.Suit;
 import com.orangebot.pitch.PitchGame.PlayedCard;
 import com.orangebot.pitch.PitchGame.Player;
 import com.orangebot.pitch.PitchGame.PlayerStrategy;
 
 public class SimpleStrategy implements PlayerStrategy {
+
+    @Override
+    public int getBid(Player p) {
+        return 2 + (int)(Math.random() * 6.0);
+    }
+
+    @Override
+    public Suit getSuit(Player p) {
+        return Suit.HEARTS;
+    }
 
     @Override
     public Card playCard(Player p) {
